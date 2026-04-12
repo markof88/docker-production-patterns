@@ -135,6 +135,12 @@ The GitHub Actions workflow (`.github/workflows/docker.yml`) runs on every push 
 
 ---
 
+## Architecture
+
+See [`docs/architecture.md`](docs/architecture.md) for a full breakdown of the image build pipeline, security layers, CI/CD job graph, and local vs production configuration.
+
+---
+
 ## Architecture Decision Records
 
 Key design decisions are documented with full context and rationale in [`docs/decisions/`](docs/decisions/):
