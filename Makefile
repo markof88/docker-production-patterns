@@ -51,7 +51,9 @@ lint: ## Run golangci-lint (requires golangci-lint installed)
 build: ## Build the Docker image (multi-stage, distroless)
 	docker build \
 		--platform $(PLATFORM) \
+		--pull \
 		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--build-arg VERSION=$(VERSION) \
 		--label "org.opencontainers.image.version=$(VERSION)" \
 		--label "org.opencontainers.image.revision=$(SHORT_SHA)" \
 		--label "org.opencontainers.image.source=https://github.com/$(OWNER)/$(IMAGE_NAME)" \

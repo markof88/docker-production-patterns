@@ -10,7 +10,7 @@
 #   docker inspect --format='{{index .RepoDigests 0}}' golang:1.26.2-alpine3.23
 # Then replace the FROM line with the digest-pinned version.
 # ─────────────────────────────────────────────
-FROM golang:1.26.2-alpine3.23 AS builder
+FROM golang:1.26.2-alpine3.23@sha256:c216c4343b489259302908b67a3c8fa55b283bdc30be729baa38b9953ca28857 AS builder
 
 # Install ca-certificates so we can copy them to the final image.
 # The distroless image includes them, but being explicit is clearer.
@@ -46,7 +46,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 #   • ~4 MB total image size
 #   • Debian 13 (Trixie) — newer packages, fewer CVEs than debian12
 # ─────────────────────────────────────────────
-FROM gcr.io/distroless/static-debian13:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:e3f945647ffb95b5839c07038d64f9811adf17308b9121d8a2b87b6a22a80a39
 
 # Copy only what the binary needs at runtime.
 # --chown makes ownership explicit and auditable.
