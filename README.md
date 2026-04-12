@@ -93,7 +93,7 @@ make help
 | Stage | Base image | Size |
 |---|---|---|
 | Builder | `golang:1.22-alpine` | ~250 MB |
-| Final | `gcr.io/distroless/static-debian12:nonroot` | ~4 MB |
+| Final | `gcr.io/distroless/static-debian13:nonroot` | ~4 MB |
 
 The final image contains only the compiled binary and necessary CA certificates. No shell. No `apt`. No `wget`.
 

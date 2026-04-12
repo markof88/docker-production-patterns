@@ -16,7 +16,7 @@ A naive Dockerfile installs build tools (Go compiler, git, make), compiles the a
 Use a two-stage Dockerfile:
 
 1. **Builder stage** (`golang:1.26.2-alpine3.23`): Contains the full Go toolchain. Compiles a fully static binary with `CGO_ENABLED=0`.
-2. **Final stage** (`gcr.io/distroless/static-debian12:nonroot`): Contains only the compiled binary and CA certificates. The Go toolchain is discarded entirely.
+2. **Final stage** (`gcr.io/distroless/static-debian13:nonroot`): Contains only the compiled binary and CA certificates. The Go toolchain is discarded entirely.
 
 ---
 

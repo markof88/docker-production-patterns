@@ -3,6 +3,12 @@
 # Stage 1: Build
 # Uses the full Go toolchain. Nothing from this
 # stage ends up in the final image.
+#
+# Digest pinning: for maximum supply chain integrity, pin both stages
+# to their exact digest using @sha256:<digest>. Get the digest with:
+#   docker pull golang:1.26.2-alpine3.23
+#   docker inspect --format='{{index .RepoDigests 0}}' golang:1.26.2-alpine3.23
+# Then replace the FROM line with the digest-pinned version.
 # ─────────────────────────────────────────────
 FROM golang:1.26.2-alpine3.23 AS builder
 
@@ -17,6 +23,10 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 
+# VERSION is injected by CI via --build-arg. Falls back to "dev" for local builds.
+# Using a build arg instead of git describe avoids issues with shallow CI clones.
+ARG VERSION=dev
+
 # Copy source and build.
 # CGO_ENABLED=0   → fully static binary (no libc dependency)
 # -trimpath       → remove local filesystem paths from the binary
@@ -24,14 +34,14 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
-    -ldflags="-s -w -X main.appVersion=$(git describe --tags --always --dirty 2>/dev/null || echo dev)" \
+    -ldflags="-s -w -X main.appVersion=${VERSION}" \
     -o /app \
     ./...
 
 # ─────────────────────────────────────────────
 # Stage 2: Final image
 # gcr.io/distroless/static-debian13:nonroot
-#   • No shell, no package manager, no libc
+#   • No shell, no package manager
 #   • Runs as UID 65532 (nonroot) by default
 #   • ~4 MB total image size
 #   • Debian 13 (Trixie) — newer packages, fewer CVEs than debian12
@@ -39,8 +49,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy only what the binary needs at runtime.
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app /app
+# --chown makes ownership explicit and auditable.
+COPY --from=builder --chown=65532:65532 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder --chown=65532:65532 /app /app
 
 # Document the port (does not publish it — that's done at runtime).
 EXPOSE 8080

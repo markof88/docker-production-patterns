@@ -10,7 +10,7 @@
 When building a container image for a compiled Go binary, the final stage base image is one of the most consequential choices. The two most common options in production are:
 
 - **Alpine Linux** (`alpine:3.x`) — a minimal Linux distribution with a package manager (`apk`) and a shell (`/bin/sh`)
-- **Distroless** (`gcr.io/distroless/static-debian12`) — a Google-maintained base with no shell, no package manager, and only the bare minimum OS libraries
+- **Distroless** (`gcr.io/distroless/static-debian13`) — a Google-maintained base with no shell, no package manager, and only the bare minimum OS libraries
 
 A compiled Go binary with `CGO_ENABLED=0` produces a fully static executable that has no runtime dependencies on shared libraries. It does not need a shell, a package manager, or any OS utilities to run.
 
@@ -34,7 +34,7 @@ Every package in a container image is a potential source of CVEs. Alpine, even a
 | Base image | Approximate size |
 |---|---|
 | `alpine:3.x` | ~7 MB |
-| `gcr.io/distroless/static-debian12:nonroot` | ~2 MB |
+| `gcr.io/distroless/static-debian13:nonroot` | ~2 MB |
 
 The final application image (binary + distroless base) is approximately 4–5 MB.
 
@@ -42,7 +42,7 @@ The final application image (binary + distroless base) is approximately 4–5 MB
 The `:nonroot` tag runs the process as UID 65532 by default, with no capability to escalate privileges. There is no `sudo`, no `su`, no setuid binaries.
 
 ### Supply chain trust
-Distroless images are built and signed by Google, with published provenance. The digest pinning in `FROM gcr.io/distroless/static-debian12:nonroot@sha256:...` (used in production deployments) ensures the exact layer contents are verified at pull time.
+Distroless images are built and signed by Google, with published provenance. The digest pinning in `FROM gcr.io/distroless/static-debian13:nonroot@sha256:...` (used in production deployments) ensures the exact layer contents are verified at pull time.
 
 ---
 

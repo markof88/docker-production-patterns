@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -50,15 +53,8 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	appEnv := os.Getenv("APP_ENV")
-	if appEnv == "" {
-		appEnv = "production"
-	}
+	port := getEnv("PORT", "8080")
+	appEnv := getEnv("APP_ENV", "production")
 
 	mux := http.NewServeMux()
 
@@ -73,6 +69,7 @@ func main() {
 
 	// Readiness probe — "am I ready to serve traffic?"
 	// In a real app this would check DB connections, downstream deps, etc.
+	// This app has no dependencies so ready == alive.
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, healthResponse{
 			Status:  "ready",
@@ -98,12 +95,40 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	slog.Info("server starting", "port", port, "env", appEnv, "version", appVersion)
+	// Start server in a goroutine so we can listen for shutdown signals.
+	serverErr := make(chan error, 1)
+	go func() {
+		slog.Info("server starting", "port", port, "env", appEnv, "version", appVersion)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serverErr <- err
+		}
+	}()
 
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// Graceful shutdown — wait for SIGTERM (Kubernetes) or SIGINT (Ctrl+C).
+	// Kubernetes sends SIGTERM when terminating a pod. We have up to
+	// terminationGracePeriodSeconds (default 30s) to finish in-flight requests
+	// before the kubelet sends SIGKILL.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	select {
+	case err := <-serverErr:
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
+	case sig := <-quit:
+		slog.Info("shutdown signal received", "signal", sig)
 	}
+
+	// Allow up to 5 seconds for in-flight requests to complete.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		slog.Error("server shutdown failed", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("server stopped gracefully")
 }
 
 func getEnv(key, fallback string) string {
