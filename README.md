@@ -135,12 +135,16 @@ The GitHub Actions workflow (`.github/workflows/docker.yml`) runs on every push 
 
 ---
 
-## What I learned / decisions made
+## Architecture Decision Records
 
-- **Distroless over Alpine**: Alpine has a shell and `apk`. Distroless has neither. For a compiled Go binary, there's no reason to include them.
-- **Keyless signing**: No private key to rotate or leak. Sigstore ties the signature to the GitHub Actions OIDC token — the identity is the workflow, not a person.
-- **`.dockerignore` matters**: Without it, `go.sum`, `.git`, and any local `.env` files end up in the build context. That's a potential secret leak and a slow build.
-- **Override pattern for Compose**: `docker-compose.yml` is production-like. `docker-compose.override.yml` adds dev conveniences (volume mounts, debug env). This mirrors how teams manage environment-specific config.
+Key design decisions are documented with full context and rationale in [`docs/decisions/`](docs/decisions/):
+
+| ADR | Decision |
+|---|---|
+| [ADR-0001](docs/decisions/0001-distroless-over-alpine.md) | Distroless base image over Alpine for the final stage |
+| [ADR-0002](docs/decisions/0002-keyless-cosign-signing.md) | Keyless cosign signing via Sigstore over key-based signing |
+| [ADR-0003](docs/decisions/0003-compose-override-pattern.md) | Docker Compose override pattern for environment-specific config |
+| [ADR-0004](docs/decisions/0004-multi-stage-build.md) | Multi-stage builds to separate build and runtime environments |
 
 ---
 
