@@ -41,6 +41,10 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  # Force Node.js 24 for all actions, including transitive dependencies
+  # (e.g. actions/cache pulled in by setup-go) that haven't yet released
+  # a Node.js 24 compatible version under our control.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ─────────────────────────────────────────────
