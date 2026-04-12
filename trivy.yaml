@@ -1,0 +1,31 @@
+# trivy.yaml — Trivy scanner configuration
+#
+# Used by both `make scan` and the GitHub Actions workflow.
+# Keeping config in a file (not inline CLI flags) means both
+# local scans and CI scans use identical settings.
+
+# Scan only HIGH and CRITICAL vulnerabilities.
+# Change to include MEDIUM if you want a stricter posture.
+severity:
+  - HIGH
+  - CRITICAL
+
+# Exit with non-zero code when vulnerabilities are found.
+# This makes `make scan` and CI both fail on findings.
+exit-code: 1
+
+# Ignore vulnerabilities that have no fix available yet.
+# These are noise — you can't fix them, but you should revisit monthly.
+ignore-unfixed: true
+
+# Output format — table is readable locally; in CI we also generate SARIF.
+format: table
+
+# Cache the vulnerability database locally to speed up repeated scans.
+cache:
+  dir: /tmp/trivy-cache
+
+# Ignore specific CVEs that are accepted risks (document why).
+# Format: CVE-YYYY-NNNNN
+# Example:
+# ignorefile: .trivyignore

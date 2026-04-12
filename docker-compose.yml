@@ -1,0 +1,43 @@
+---
+# docker-compose.yml — production-like configuration
+#
+# This file describes the service as it would run in production.
+# It has NO dev conveniences (no volume mounts, no debug ports).
+#
+# For local development, docker-compose.override.yml is automatically
+# merged by Docker Compose and adds dev-specific overrides.
+#
+# Run production-like:  docker compose -f docker-compose.yml up
+# Run dev mode:         docker compose up   (auto-merges override)
+
+services:
+  app:
+    image: ghcr.io/markof88/docker-production-patterns:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Build args let CI inject the version at build time.
+      # Do NOT pass secrets here — use BuildKit secret mounts instead.
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    ports:
+      - "8080:8080"
+    environment:
+      # Never hardcode secrets. Reference them from the environment
+      # or from a secrets manager. The values here are safe defaults.
+      PORT: "8080"
+      APP_ENV: "production"
+      LOG_LEVEL: "info"
+    read_only: true                   # Filesystem is read-only — no writes allowed
+    security_opt:
+      - no-new-privileges:true        # Prevents privilege escalation via setuid binaries
+    cap_drop:
+      - ALL                           # Drop all Linux capabilities — we need none
+    user: "65532:65532"              # nonroot UID from distroless (explicit is better)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/app", "-healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

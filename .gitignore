@@ -1,0 +1,26 @@
+# Compiled binary
+app
+bin/
+dist/
+
+# Go
+*.test
+*.out
+coverage.html
+
+# Local environment — never commit secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Trivy output
+trivy-results.sarif
+/tmp/trivy-cache/
+
+# Editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

@@ -1,0 +1,48 @@
+# Version control
+.git
+.gitignore
+
+# Build artifacts — never copy local binaries into the build context
+bin/
+dist/
+app
+
+# Go test and coverage artifacts
+*.test
+*.out
+coverage.html
+
+# Local environment files — NEVER let these reach the build context
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+
+# Docker files themselves (no need to copy into image)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# CI/CD config (not needed at runtime)
+.github/
+.gitlab-ci.yml
+
+# Documentation
+docs/
+*.md
+
+# Makefile
+Makefile
+
+# Dependency vendor directory if present (go mod handles this)
+vendor/

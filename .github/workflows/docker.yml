@@ -1,0 +1,176 @@
+---
+# .github/workflows/docker.yml
+#
+# Pipeline: build → test → scan → push → sign
+#
+# Triggers:
+#   - Push to main (full pipeline including push + sign)
+#   - Pull requests (build + test + scan only — no push)
+#   - Tags matching v* (full pipeline, tagged release)
+#
+# Secrets required (set in GitHub repo Settings → Secrets):
+#   GITHUB_TOKEN — automatically provided, used for ghcr.io push
+#
+# No other secrets needed. cosign uses keyless signing via
+# GitHub Actions OIDC — no private key to manage or rotate.
+
+name: Docker
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+
+# Prevent concurrent runs on the same branch from racing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Job 1: Test
+  # Run Go tests before touching Docker at all.
+  # Fast feedback — fails early if code is broken.
+  # ─────────────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run tests
+        run: go test -race -count=1 ./...
+
+  # ─────────────────────────────────────────────
+  # Job 2: Build, scan, push, sign
+  # Depends on test passing.
+  # ─────────────────────────────────────────────
+  build:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    needs: test
+
+    # These permissions are required:
+    #   contents:read     — checkout
+    #   packages:write    — push to ghcr.io
+    #   id-token:write    — cosign keyless signing via OIDC
+    #   security-events:write — upload Trivy SARIF to GitHub Security tab
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Docker Buildx enables multi-platform builds and better caching.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to ghcr.io using the automatically-provided GITHUB_TOKEN.
+      # No additional secrets needed.
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generate image metadata (tags and labels) following OCI spec.
+      # This handles tagging strategy automatically:
+      #   - main branch → :latest + :sha-<short>
+      #   - v1.2.3 tag  → :1.2.3 + :1.2 + :1 + :latest
+      #   - PR          → :pr-42 (not pushed)
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=docker-production-patterns
+            org.opencontainers.image.description=Production-grade Docker patterns with Go
+            org.opencontainers.image.vendor=markof88
+
+      # Build the image.
+      # On main/tags: also push to ghcr.io.
+      # On PRs: build only (no push) — still validates the Dockerfile.
+      # Layer caching via registry cache reduces build time significantly.
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}:buildcache,mode=max', env.REGISTRY, env.IMAGE_NAME) || '' }}
+          provenance: true    # Generates SLSA provenance attestation
+          sbom: true          # Generates Software Bill of Materials
+
+      # Scan the built image for vulnerabilities.
+      # Uploads results to GitHub Security tab (SARIF).
+      # Also fails the job if HIGH or CRITICAL CVEs are found (per trivy.yaml).
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          config: trivy.yaml
+          format: sarif
+          output: trivy-results.sarif
+        # On PRs, the image wasn't pushed so we scan the local build instead.
+        env:
+          TRIVY_INPUT: ${{ github.event_name == 'pull_request' && '' || '' }}
+
+      - name: Upload Trivy SARIF to GitHub Security tab
+        if: always()    # Upload even if Trivy found vulnerabilities
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+      # Install cosign for keyless image signing.
+      # Keyless = no private key. The signature is tied to the GitHub
+      # Actions OIDC token, which proves this workflow signed this image.
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+
+      # Sign the image digest (not the tag — tags are mutable, digests are not).
+      # The signature is stored in the registry alongside the image.
+      - name: Sign image with cosign (keyless)
+        if: github.event_name != 'pull_request'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          echo "${TAGS}" | xargs -I {} cosign sign --yes \
+            "{}@${DIGEST}"

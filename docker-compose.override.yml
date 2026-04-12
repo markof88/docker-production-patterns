@@ -1,0 +1,29 @@
+---
+# docker-compose.override.yml — development overrides
+#
+# This file is automatically merged by Docker Compose when you run
+# `docker compose up` without specifying a -f flag.
+#
+# It should ONLY exist locally and be listed in .gitignore in repos
+# where dev secrets might be added. In this repo it's safe to commit
+# because it contains no secrets — just ergonomic dev settings.
+#
+# Pattern: override.yml makes the dev experience good;
+#           docker-compose.yml stays production-like.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder          # Build to the builder stage only — faster iteration
+    environment:
+      APP_ENV: "development"
+      LOG_LEVEL: "debug"       # Verbose logging locally
+    # In dev, relax the read-only constraint so the app can write
+    # temp files if needed (e.g. profiling output).
+    read_only: false
+    # Expose pprof debug port locally only — NEVER in production
+    ports:
+      - "8080:8080"
+      - "6060:6060"
