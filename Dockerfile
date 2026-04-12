@@ -30,12 +30,13 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 
 # ─────────────────────────────────────────────
 # Stage 2: Final image
-# gcr.io/distroless/static-debian12:nonroot
+# gcr.io/distroless/static-debian13:nonroot
 #   • No shell, no package manager, no libc
 #   • Runs as UID 65532 (nonroot) by default
 #   • ~4 MB total image size
+#   • Debian 13 (Trixie) — newer packages, fewer CVEs than debian12
 # ─────────────────────────────────────────────
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy only what the binary needs at runtime.
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

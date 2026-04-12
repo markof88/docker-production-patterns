@@ -18,7 +18,7 @@ A compiled Go binary with `CGO_ENABLED=0` produces a fully static executable tha
 
 ## Decision
 
-Use `gcr.io/distroless/static-debian12:nonroot` as the base image for the final stage.
+Use `gcr.io/distroless/static-debian13:nonroot` as the base image for the final stage.
 
 ---
 
