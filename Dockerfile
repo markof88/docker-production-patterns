@@ -4,7 +4,7 @@
 # Uses the full Go toolchain. Nothing from this
 # stage ends up in the final image.
 # ─────────────────────────────────────────────
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 # Install ca-certificates so we can copy them to the final image.
 # The distroless image includes them, but being explicit is clearer.

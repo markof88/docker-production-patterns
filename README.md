@@ -1,7 +1,7 @@
 # docker-production-patterns
 
 [![CI](https://github.com/markof88/docker-production-patterns/actions/workflows/docker.yml/badge.svg)](https://github.com/markof88/docker-production-patterns/actions/workflows/docker.yml)
-[![Go](https://img.shields.io/badge/Go-1.22-00ADD8?logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > Production-grade Docker patterns demonstrated through a minimal Go HTTP API.

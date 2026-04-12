@@ -1,3 +1,3 @@
 module github.com/markof88/docker-production-patterns
 
-go 1.22
+go 1.26
