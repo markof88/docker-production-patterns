@@ -26,6 +26,13 @@ on:
     branches:
       - main
 
+# Workflow-level default: restrict everything to read-only.
+# Individual jobs override only what they actually need.
+# The repo-level "Workflow permissions" setting does NOT need to be
+# changed to "Read and write" — these explicit grants take precedence.
+permissions:
+  contents: read
+
 # Prevent concurrent runs on the same branch from racing.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
