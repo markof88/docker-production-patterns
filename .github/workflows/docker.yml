@@ -81,6 +81,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # go.sum must exist before Docker builds — generate it here.
+      # This is needed because go.sum is not committed (generated at build time).
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Generate go.sum
+        run: go mod tidy
+
       # Docker Buildx enables multi-platform builds and better caching.
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -140,18 +151,17 @@ jobs:
       # Uploads results to GitHub Security tab (SARIF).
       # Also fails the job if HIGH or CRITICAL CVEs are found (per trivy.yaml).
       - name: Scan image with Trivy
+        if: steps.build.outcome == 'success'
+        id: trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
           config: trivy.yaml
           format: sarif
           output: trivy-results.sarif
-        # On PRs, the image wasn't pushed so we scan the local build instead.
-        env:
-          TRIVY_INPUT: ${{ github.event_name == 'pull_request' && '' || '' }}
 
       - name: Upload Trivy SARIF to GitHub Security tab
-        if: always()    # Upload even if Trivy found vulnerabilities
+        if: steps.trivy.outcome == 'success' || steps.trivy.outcome == 'failure'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
