@@ -14,7 +14,7 @@
 #   publish      — push multi-arch, scan digest, sign (main/tags only)
 #
 # Trade-offs documented:
-#   - Double build on push: see docs/decisions/ADR-005-pr-image-scanning.md
+#   - Double build on push: see docs/decisions/0005-pr-image-scanning.md
 #   - PR scan is amd64 only: see ADR-005
 #
 # Secrets required:
@@ -166,7 +166,7 @@ jobs:
   # This is a deliberate trade-off: clean job separation and
   # permission scoping over build efficiency.
   # Registry cache (buildcache tag) significantly reduces the cost.
-  # See: docs/decisions/ADR-005-pr-image-scanning.md
+  # See: docs/decisions/0005-pr-image-scanning.md
   # ─────────────────────────────────────────────────────────────
   build:
     name: Build image

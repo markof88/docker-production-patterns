@@ -155,7 +155,7 @@ Response format: JSON. Structured logging via `log/slog` (JSON output in product
 
 **PR vs push behaviour:**
 - PRs scan a locally loaded image — no registry write, no `packages: write` permission on PRs.
-- Push events trigger two builds (build + publish). This is deliberate — see [ADR-005](decisions/ADR-005-pr-image-scanning.md).
+- Push events trigger two builds (build + publish). This is deliberate — see [ADR-0005](decisions/0005-pr-image-scanning.md).
 - The publish job always scans the digest (not the tag) — digests are immutable, tags are not.
 
 ---
@@ -166,5 +166,5 @@ Response format: JSON. Structured logging via `log/slog` (JSON output in product
 - [ADR-0002](decisions/0002-keyless-cosign-signing.md) — Why keyless cosign signing
 - [ADR-0003](decisions/0003-compose-override-pattern.md) — Why the Compose override pattern
 - [ADR-0004](decisions/0004-multi-stage-build.md) — Why multi-stage builds
-- [ADR-005](decisions/ADR-005-pr-image-scanning.md) — Why PRs scan locally (--load) and push triggers two builds
+- [ADR-0005](decisions/0005-pr-image-scanning.md) — Why PRs scan locally (--load) and push triggers two builds
 - [Runbook](runbook.md) — Day-2 operations
