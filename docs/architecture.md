@@ -140,22 +140,23 @@ Response format: JSON. Structured logging via `log/slog` (JSON output in product
 ## CI/CD pipeline — job dependency
 
 ```
-push to main
-     │
-     ├──▶ test job
-     │    └── go test -race ./...
-     │              │
-     │              │ (must pass)
-     │              ▼
-     └──▶ build job (needs: test)
-          ├── go mod tidy
-          ├── docker buildx build (linux/amd64 + linux/arm64)
-          ├── push to ghcr.io
-          ├── trivy scan → Security tab
-          └── cosign sign
+   prepare ─┐
+             ├──▶ scan-source ──▶ build ──▶ publish
+   test    ─┘
 ```
 
-Pull requests follow the same flow but skip the push and sign steps — the Dockerfile is still built and tested on every PR.
+| Job | Runs on | What it does |
+|---|---|---|
+| `prepare` | all events | Computes image tags/labels from GitHub context. No checkout needed. |
+| `test` | all events | `go mod tidy && git diff --exit-code`, then `go test -race` |
+| `scan-source` | after prepare + test | Trivy filesystem scan on source and config files. Blocks on HIGH/CRITICAL. |
+| `build` | after scan-source | **PR:** builds `linux/amd64` with `--load`, scans local image with Trivy. **Push:** builds multi-arch (no push) to validate the build. |
+| `publish` | push to main/tags only | Rebuilds multi-arch, pushes to ghcr.io, scans the exact pushed digest, signs with cosign. |
+
+**PR vs push behaviour:**
+- PRs scan a locally loaded image — no registry write, no `packages: write` permission on PRs.
+- Push events trigger two builds (build + publish). This is deliberate — see [ADR-005](decisions/ADR-005-pr-image-scanning.md).
+- The publish job always scans the digest (not the tag) — digests are immutable, tags are not.
 
 ---
 
@@ -165,4 +166,5 @@ Pull requests follow the same flow but skip the push and sign steps — the Dock
 - [ADR-0002](decisions/0002-keyless-cosign-signing.md) — Why keyless cosign signing
 - [ADR-0003](decisions/0003-compose-override-pattern.md) — Why the Compose override pattern
 - [ADR-0004](decisions/0004-multi-stage-build.md) — Why multi-stage builds
+- [ADR-005](decisions/ADR-005-pr-image-scanning.md) — Why PRs scan locally (--load) and push triggers two builds
 - [Runbook](runbook.md) — Day-2 operations

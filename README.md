@@ -129,13 +129,13 @@ cosign verify \
 
 ## CI/CD pipeline
 
-The GitHub Actions workflow (`.github/workflows/docker.yml`) runs on every push and pull request:
+The GitHub Actions workflow (`.github/workflows/docker.yml`) runs a 5-job DAG on every push and pull request:
 
-1. **Build** — multi-stage Docker build
-2. **Test** — `go test ./...`
-3. **Scan** — Trivy vulnerability scan (fails on HIGH or CRITICAL)
-4. **Push** — to `ghcr.io/markof88/docker-production-patterns` (main branch only)
-5. **Sign** — keyless cosign signature attached to the image manifest
+1. **Prepare** — computes image tags and labels from GitHub context (no checkout)
+2. **Test** — `go mod tidy` hygiene check + `go test -race`
+3. **Scan source** — Trivy filesystem scan on source and config files; blocks on HIGH/CRITICAL
+4. **Build** — PR: builds `linux/amd64`, loads into daemon, scans locally (no registry write). Push: builds multi-arch for validation.
+5. **Publish** — push multi-arch image, scan the exact digest, sign with cosign (main/tags only)
 
 ---
 
@@ -155,6 +155,7 @@ Key design decisions are documented with full context and rationale in [`docs/de
 | [ADR-0002](docs/decisions/0002-keyless-cosign-signing.md) | Keyless cosign signing via Sigstore over key-based signing |
 | [ADR-0003](docs/decisions/0003-compose-override-pattern.md) | Docker Compose override pattern for environment-specific config |
 | [ADR-0004](docs/decisions/0004-multi-stage-build.md) | Multi-stage builds to separate build and runtime environments |
+| [ADR-005](docs/decisions/ADR-005-pr-image-scanning.md) | PR image scanning locally (--load) to avoid registry writes on PRs |
 
 ---
 
