@@ -40,8 +40,8 @@ The Go app is intentionally small. It's a vehicle, not the point. The point is e
 ┌─────────────────────────────────────────────┐
 │  GitHub Actions CI/CD                        │
 │                                              │
-│  push → build → test → trivy scan           │
-│       → push to ghcr.io → cosign sign       │
+│  prepare ─┬─▶ scan-source ─▶ build ─▶ publish │
+│  test    ─┘                                  │
 └──────────────────┬──────────────────────────┘
                    │
                    ▼
@@ -64,13 +64,13 @@ The Go app is intentionally small. It's a vehicle, not the point. The point is e
 
 ## Local development
 
-**Prerequisites:** Docker, Docker Compose, Go 1.22+, Make
+**Prerequisites:** Docker, Docker Compose, Go 1.26+, Make
 
 ```bash
 # Build the image
 make build
 
-# Run with Docker Compose (dev mode with live reload via Air)
+# Start dev environment (auto-merges docker-compose.override.yml)
 make dev
 
 # Run production image locally
@@ -92,7 +92,7 @@ make help
 
 | Stage | Base image | Size |
 |---|---|---|
-| Builder | `golang:1.22-alpine` | ~250 MB |
+| Builder | `golang:1.26.2-alpine3.23` | ~250 MB |
 | Final | `gcr.io/distroless/static-debian13:nonroot` | ~4 MB |
 
 The final image contains only the compiled binary and necessary CA certificates. No shell. No `apt`. No `wget`.
