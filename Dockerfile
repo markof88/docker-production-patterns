@@ -14,6 +14,7 @@ FROM golang:1.26.2-alpine3.23 AS builder
 
 # Install ca-certificates so we can copy them to the final image.
 # The distroless image includes them, but being explicit is clearer.
+# hadolint ignore=DL3018
 RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /build
