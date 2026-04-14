@@ -156,6 +156,7 @@ Key design decisions are documented with full context and rationale in [`docs/de
 | [ADR-0003](docs/decisions/0003-compose-override-pattern.md) | Docker Compose override pattern for environment-specific config |
 | [ADR-0004](docs/decisions/0004-multi-stage-build.md) | Multi-stage builds to separate build and runtime environments |
 | [ADR-0005](docs/decisions/0005-pr-image-scanning.md) | PR image scanning locally (--load) to avoid registry writes on PRs |
+| [ADR-0006](docs/decisions/0006-github-settings-manual.md) | GitHub repository settings managed manually, not via Terraform |
 
 ---
 
