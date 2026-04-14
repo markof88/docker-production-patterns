@@ -25,10 +25,12 @@ The following jobs must pass before a PR can merge:
 
 | Setting | Value |
 |---|---|
-| Required approvals | 1 |
+| Required approvals | 0 (solo project — GitHub does not allow self-approval) |
 | Dismiss stale reviews on new push | Enabled |
 | Require conversation resolution before merge | Enabled |
 | Allow bypassing rules (including admins) | **Disabled** |
+
+Required approvals is set to 0 because GitHub prevents a repository owner from approving their own pull requests. On a team this would be 1 or more. The pipeline checks (test, scan, build) still gate every merge — the approval requirement is the only concession to the solo context.
 
 Admins bypassing protection defeats the purpose. Every change, including hotfixes, goes through the pipeline.
 
