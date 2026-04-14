@@ -1,0 +1,10 @@
+# hadolint configuration
+# https://github.com/hadolint/hadolint
+
+# DL3018: Pin versions in apk add.
+# Suppressed for ca-certificates and tzdata — these are security-sensitive packages
+# where you want the latest patch available within the pinned Alpine release
+# (golang:1.26.2-alpine3.23). Pinning to a specific package version would prevent
+# receiving security updates without a Dockerfile change.
+ignored:
+  - DL3018

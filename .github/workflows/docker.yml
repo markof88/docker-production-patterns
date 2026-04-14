@@ -129,6 +129,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6.0.2
 
+      - name: Lint Dockerfile with hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yaml
+
       - name: Run Trivy filesystem scan
         id: trivy-fs
         uses: aquasecurity/trivy-action@v0.35.0

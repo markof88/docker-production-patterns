@@ -44,6 +44,12 @@ test: ## Run Go tests with race detector
 lint: ## Run golangci-lint (requires golangci-lint installed)
 	golangci-lint run ./...
 
+.PHONY: lint-dockerfile
+lint-dockerfile: ## Lint Dockerfile with hadolint (uses Docker — no local install needed)
+	docker run --rm \
+		-v $(PWD):/work -w /work \
+		hadolint/hadolint hadolint --config .hadolint.yaml Dockerfile
+
 # ─────────────────────────────────────────────
 # Docker targets
 # ─────────────────────────────────────────────
