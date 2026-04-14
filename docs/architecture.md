@@ -167,4 +167,5 @@ Response format: JSON. Structured logging via `log/slog` (JSON output in product
 - [ADR-0003](decisions/0003-compose-override-pattern.md) — Why the Compose override pattern
 - [ADR-0004](decisions/0004-multi-stage-build.md) — Why multi-stage builds
 - [ADR-0005](decisions/0005-pr-image-scanning.md) — Why PRs scan locally (--load) and push triggers two builds
+- [ADR-0006](decisions/0006-github-settings-manual.md) — Why GitHub settings are documented rather than managed via Terraform
 - [Runbook](runbook.md) — Day-2 operations

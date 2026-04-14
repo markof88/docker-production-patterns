@@ -1,0 +1,9 @@
+# CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Every file in this repo requires review from @markof88.
+# On a team, this would be broken out by area:
+#   .github/workflows/  @org/platform-team
+#   Dockerfile          @org/security-team
+
+* @markof88
